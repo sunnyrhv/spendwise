@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SpendWise — Minimalist Personal Expense & Subscription Tracker with Predictive Budget Pacing.">
+    <title>SpendWise — Expense & Subscription Tracker</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome 6 Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Refined Minimalist Stylesheet -->
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body class="h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-[#09090b] dark:text-zinc-100 antialiased transition-colors duration-150">
+    
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-slate-900 focus:text-white focus:rounded focus:outline-none">
+        Skip to main content
+    </a>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Minimalist Header -->
+    <header class="sticky top-0 z-40 bg-white/90 dark:bg-[#09090b]/90 backdrop-blur border-b border-slate-200/80 dark:border-zinc-800/80" role="banner">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+            
+            <!-- Brand -->
+            <div class="flex items-center gap-3">
+                <a href="./index.html" class="flex items-center gap-2" aria-label="SpendWise">
+                    <div class="w-8 h-8 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </div>
+                    <span class="text-base font-semibold tracking-tight text-slate-900 dark:text-white">SpendWise</span>
+                </a>
+            </div>
+
+            <!-- Global Controls & Profile Pill -->
+            <div class="flex items-center gap-2">
+                <!-- Accessibility Controls -->
+                <div class="flex items-center rounded-md border border-slate-200 dark:border-zinc-800 p-0.5 text-xs">
+                    <button id="contrast-toggle-btn" class="p-1.5 text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white rounded" title="Toggle High Contrast (Alt+C)" aria-label="Toggle High Contrast">
+                        <i class="fa-solid fa-circle-half-stroke"></i>
+                    </button>
+                    <button id="font-size-btn" class="px-2 py-1 text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white rounded font-medium" title="Cycle Font Size" aria-label="Cycle Font Size">
+                        <span id="font-size-label">A</span>
+                    </button>
+                    <button id="theme-toggle-btn" class="p-1.5 text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white rounded" title="Toggle Theme" aria-label="Toggle Theme">
+                        <i class="fa-solid fa-moon dark:hidden"></i>
+                        <i class="fa-solid fa-sun hidden dark:inline"></i>
+                    </button>
+                </div>
+
+                <!-- Shortcuts Modal Button -->
+                <button onclick="toggleKeyboardModal(true)" class="p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white border border-slate-200 dark:border-zinc-800 text-xs" title="Shortcuts (?)" aria-label="Shortcuts">
+                    <i class="fa-solid fa-keyboard"></i>
+                </button>
+
+                <!-- Notifications -->
+                <div class="relative">
+                    <button id="notif-btn" onclick="toggleNotificationPanel()" class="relative p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white border border-slate-200 dark:border-zinc-800 text-xs" aria-label="Notifications">
+                        <i class="fa-solid fa-bell"></i>
+                        <span id="notif-badge" class="hidden absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
+                    </button>
+                    <div id="notif-panel" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-slate-200 dark:border-zinc-800 p-4 z-50">
+                        <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
+                            <span class="text-xs font-semibold text-slate-900 dark:text-white">Limit Alerts & Notices</span>
+                            <button onclick="clearAllNotifications()" class="text-[11px] text-slate-500 hover:underline">Mark read</button>
+                        </div>
+                        <div id="notif-list" class="divide-y divide-slate-100 dark:divide-zinc-800 max-h-60 overflow-y-auto py-1"></div>
+                    </div>
+                </div>
+
+                <!-- Profile & Account Pill -->
+                <button onclick="openProfileModal()" class="px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-md border border-slate-200 dark:border-zinc-800 transition flex items-center gap-1.5" title="View Profile & Data Storage">
+                    <i class="fa-solid fa-user-circle text-slate-500 text-xs"></i>
+                    <span id="header-profile-name">Sunny</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div id="sr-announcer" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+
+    <!-- Main Command Center -->
+    <main id="main-content" class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Top Overview Header: Month, Currency, Export -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>Overview</span>
+                    <span id="pacing-badge" class="text-xs px-2 py-0.5 rounded font-medium bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300">
+                        Calculating
+                    </span>
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                    Predictive pacing, monthly budget alerts, and active subscription tracking in <span class="user-currency-symbol font-medium">₹</span>.
+                </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <select id="month-select" onchange="refreshAllDashboard()" class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs rounded-lg px-2.5 py-1.5 font-medium focus:ring-1 focus:ring-slate-400"></select>
+                <button onclick="openSettingsModal()" class="px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-medium rounded-lg transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-sliders text-slate-400"></i>
+                    <span>Set Limits</span>
+                </button>
+                <button onclick="Store.exportCSV()" class="px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-medium rounded-lg transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-csv text-slate-400"></i>
+                    <span>Export CSV</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Overspend Alert Notification Banner -->
+        <div id="budget-alert-banner" class="hidden rounded-xl border border-rose-200 bg-rose-50/70 dark:bg-rose-950/30 dark:border-rose-900/60 p-3.5 flex items-start gap-3">
+            <i class="fa-solid fa-triangle-exclamation text-rose-600 mt-0.5 text-sm"></i>
+            <div class="flex-1 text-xs text-rose-900 dark:text-rose-200">
+                <span class="font-semibold block mb-0.5">Monthly Spending Alert</span>
+                <span id="budget-alert-message"></span>
+            </div>
+        </div>
+
+        <!-- KPI SUMMARY BAR -->
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" aria-label="Summary KPIs">
+            <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200/80 dark:border-zinc-800/80">
+                <span class="text-[11px] font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Total Outflow</span>
+                <span id="kpi-expense" class="block text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">₹0.00</span>
+                <span class="text-[11px] text-slate-400 mt-0.5 block">Expenses this month</span>
+            </div>
+
+            <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200/80 dark:border-zinc-800/80">
+                <span class="text-[11px] font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Total Inflow</span>
+                <span id="kpi-income" class="block text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">₹0.00</span>
+                <span class="text-[11px] text-slate-400 mt-0.5 block">Income recorded</span>
+            </div>
+
+            <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200/80 dark:border-zinc-800/80">
+                <span class="text-[11px] font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Net Balance</span>
+                <span id="kpi-savings" class="block text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">₹0.00</span>
+                <span id="kpi-savings-sub" class="text-[11px] text-slate-400 mt-0.5 block">Net Surplus</span>
+            </div>
+
+            <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200/80 dark:border-zinc-800/80">
+                <span class="text-[11px] font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Recurring Monthly</span>
+                <span id="kpi-subscriptions" class="block text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">₹0.00</span>
+                <span id="kpi-subs-annual" class="text-[11px] text-slate-400 mt-0.5 block">Active subscriptions</span>
+            </div>
+        </section>
+
+        <!-- PREDICTIVE BUDGET PACING CARD -->
+        <section class="bg-white dark:bg-zinc-900 rounded-xl p-4 sm:p-5 border border-slate-200/80 dark:border-zinc-800/80 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="space-y-1">
+                    <span class="text-[11px] uppercase font-semibold text-slate-400 dark:text-zinc-500 tracking-wider">Monthly Limit Pacing</span>
+                    <div class="flex items-baseline gap-2">
+                        <span id="spent-amount-text" class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">₹0.00</span>
+                        <span class="text-xs text-slate-400">spent of</span>
+                        <span id="budget-amount-text" class="text-sm font-semibold text-slate-700 dark:text-zinc-300">₹50,000.00</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4 bg-slate-50 dark:bg-zinc-800/50 px-4 py-2.5 rounded-lg border border-slate-100 dark:border-zinc-800">
+                    <div>
+                        <span class="block text-[10px] uppercase font-semibold text-slate-400">Safe Daily Spend</span>
+                        <span id="safe-daily-spend" class="text-base font-bold text-slate-900 dark:text-white font-mono">₹0.00/day</span>
+                        <span id="safe-daily-days" class="block text-[10px] text-slate-400">to stay on budget</span>
+                    </div>
+                    <div class="border-l border-slate-200 dark:border-zinc-700 pl-4">
+                        <span class="block text-[10px] uppercase font-semibold text-slate-400">Projected Month-End</span>
+                        <span id="projected-month-end" class="text-base font-bold text-slate-900 dark:text-white font-mono">₹0.00</span>
+                        <span id="projected-status-tag" class="block text-[10px] font-medium text-emerald-600 dark:text-emerald-400">On Track</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dual Gauge Bar -->
+            <div class="space-y-1.5 pt-1">
+                <div class="flex justify-between text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                    <span>Consumed: <strong id="spent-percent-text" class="text-slate-900 dark:text-white">0%</strong></span>
+                    <span id="days-elapsed-text">Day 1</span>
+                </div>
+                <div class="relative w-full h-2.5 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden" role="progressbar">
+                    <div id="time-elapsed-marker" class="absolute top-0 bottom-0 w-0.5 bg-slate-400 z-10" style="left: 0%;"></div>
+                    <div id="budget-progress-fill" class="h-full rounded-full transition-all duration-300 bg-slate-900 dark:bg-indigo-500" style="width: 0%;"></div>
+                </div>
+                <div class="flex justify-between text-[10px] text-slate-400">
+                    <span>Day 1</span>
+                    <span id="alert-threshold-marker">Alert Threshold: 80%</span>
+                    <span id="days-in-month-label">Day 30</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAST EXPENSE ENTRY (ZERO-FRICTION) -->
+        <section id="quick-logger-panel" class="bg-white dark:bg-zinc-900 rounded-xl p-4 sm:p-5 border border-slate-200/80 dark:border-zinc-800/80 space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">Fast Entry</span>
+                    <span class="text-xs text-slate-400">• Voice, Natural Text, or Bank SMS</span>
+                </div>
+                <div class="inline-flex rounded-lg border border-slate-200 dark:border-zinc-800 p-0.5 text-xs">
+                    <button onclick="switchAddMode('nlp')" id="tab-nlp" class="px-2.5 py-1 rounded bg-white dark:bg-zinc-800 text-slate-900 dark:text-white font-medium">Text / Voice</button>
+                    <button onclick="switchAddMode('sms')" id="tab-sms" class="px-2.5 py-1 rounded text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white">Bank SMS</button>
+                    <button onclick="switchAddMode('manual')" id="tab-manual" class="px-2.5 py-1 rounded text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white">Structured Form</button>
+                </div>
+            </div>
+
+            <!-- NLP & Voice Tab -->
+            <div id="panel-nlp" class="space-y-3">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <!-- Text bar -->
+                    <div class="flex-1 flex items-center gap-2 bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-700/80 rounded-lg p-1.5 focus-within:border-slate-500 dark:focus-within:border-zinc-500 transition">
+                        <input type="text" id="nlp-input" 
+                               class="w-full bg-transparent border-none text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 px-2 py-1 focus:outline-none" 
+                               placeholder="Type expense: e.g. 'Swiggy dinner 450' or 'Uber to airport 680 yesterday'"
+                               onkeydown="if(event.key === 'Enter') handleDirectAddNLP()">
+                        
+                        <button id="voice-record-btn" onclick="toggleVoiceSpeech()" class="px-2.5 py-1.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded text-xs font-medium flex items-center gap-1.5 transition whitespace-nowrap">
+                            <i class="fa-solid fa-microphone text-xs"></i> <span>Voice</span>
+                        </button>
+                    </div>
+
+                    <!-- Category Selector on Input -->
+                    <div class="flex items-center gap-2">
+                        <select id="nlp-category-select" class="px-2.5 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-medium text-slate-800 dark:text-zinc-200">
+                            <!-- Populated dynamically -->
+                        </select>
+
+                        <!-- Add Button -->
+                        <button onclick="handleDirectAddNLP()" class="px-4 py-2 bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition whitespace-nowrap">
+                            <i class="fa-solid fa-plus mr-1"></i> Add Expense
+                        </button>
+
+                        <!-- Review Button -->
+                        <button onclick="handleReviewNLP()" class="px-3 py-2 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 rounded-lg text-xs font-medium transition whitespace-nowrap" title="Edit fields before adding">
+                            Review
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Suggested Quick Prompts -->
+                <div class="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400">
+                    <span class="text-[11px] text-slate-400 mr-1">Quick click to test:</span>
+                    <button onclick="setNLPExample('Swiggy dinner 450')" class="px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800 text-[11px]">🍕 Swiggy 450</button>
+                    <button onclick="setNLPExample('Uber ride to airport 680')" class="px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800 text-[11px]">🚕 Uber 680</button>
+                    <button onclick="setNLPExample('Blinkit groceries 840 yesterday')" class="px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800 text-[11px]">🛒 Blinkit 840</button>
+                    <button onclick="setNLPExample('Netflix subscription 649')" class="px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800 text-[11px]">📺 Netflix 649</button>
+                    <button onclick="setNLPExample('Received salary 65000 today')" class="px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800 text-[11px]">💰 Salary 65,000</button>
+                </div>
+            </div>
+
+            <!-- SMS Tab -->
+            <div id="panel-sms" class="space-y-3 hidden">
+                <textarea id="sms-input" rows="2" 
+                          class="w-full p-2.5 bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-700/80 rounded-lg text-xs font-mono text-slate-900 dark:text-white focus:outline-none"
+                          placeholder="Paste bank/UPI SMS here: e.g. 'Sent Rs 450.00 from HDFC Bank A/c xx1234 to ZOMATO on 21-Nov-26' or 'Debited by INR 1,299.00 at BLINKIT'"></textarea>
+                
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs text-slate-500 dark:text-zinc-400">Category:</label>
+                        <select id="sms-category-select" class="px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-medium text-slate-800 dark:text-zinc-200">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-2 self-end">
+                        <button onclick="handleReviewSMS()" class="px-3.5 py-1.5 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 rounded text-xs font-medium">
+                            Review First
+                        </button>
+                        <button onclick="handleDirectAddSMS()" class="px-4 py-1.5 bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white rounded text-xs font-semibold shadow-sm">
+                            <i class="fa-solid fa-plus mr-1"></i> Add to Ledger
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Structured Form Tab -->
+            <div id="panel-manual" class="space-y-3 hidden">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-500 mb-1">Amount (<span class="user-currency-symbol">₹</span>)</label>
+                        <input type="number" step="0.01" min="0.01" id="man-amount" placeholder="0.00" class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-500 mb-1">Type</label>
+                        <select id="man-type" class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs">
+                            <option value="expense">Outflow (Expense)</option>
+                            <option value="income">Inflow (Income)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-500 mb-1">Category</label>
+                        <select id="man-category" class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-500 mb-1">Merchant / Payee</label>
+                        <input type="text" id="man-merchant" placeholder="e.g. Swiggy, Amazon" class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-500 mb-1">Date</label>
+                        <input type="date" id="man-date" class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-500 mb-1">Payment Method</label>
+                        <select id="man-payment" class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs">
+                            <option value="UPI">UPI (GPay / PhonePe / Paytm)</option>
+                            <option value="Credit Card">Credit Card</option>
+                            <option value="Debit Card">Debit Card</option>
+                            <option value="Net Banking">Net Banking</option>
+                            <option value="Cash">Cash</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between pt-1">
+                    <label class="flex items-center gap-2 text-xs text-slate-600 dark:text-zinc-400 cursor-pointer">
+                        <input type="checkbox" id="man-recurring" class="rounded text-indigo-600">
+                        <span>Mark as Recurring Subscription (tracks in Subscriptions section)</span>
+                    </label>
+                    <button onclick="submitManualExpense()" class="px-4 py-1.5 bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white rounded text-xs font-medium">Record Transaction</button>
+                </div>
+            </div>
+
+            <!-- FULLY EDITABLE STAGED REVIEW CARD -->
+            <div id="staged-card" class="hidden bg-slate-50 dark:bg-zinc-800/90 p-4 rounded-xl border border-slate-200 dark:border-zinc-700 space-y-3">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-zinc-700">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Review & Edit Details</span>
+                        <span id="staged-type-badge" class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-200 dark:bg-zinc-700">Outflow</span>
+                    </div>
+                    <span class="text-[11px] text-slate-400">All fields are editable before saving</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Amount (<span class="user-currency-symbol">₹</span>)</label>
+                        <input type="number" step="0.01" min="0.01" id="staged-amount-input" class="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Merchant / Payee</label>
+                        <input type="text" id="staged-merchant-input" class="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Category</label>
+                        <select id="staged-category-select" class="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-medium"></select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Payment Method</label>
+                        <select id="staged-payment-select" class="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs">
+                            <option value="UPI">UPI</option>
+                            <option value="Credit Card">Credit Card</option>
+                            <option value="Debit Card">Debit Card</option>
+                            <option value="Net Banking">Net Banking</option>
+                            <option value="Cash">Cash</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Date</label>
+                        <input type="date" id="staged-date-input" class="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs">
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+                    <label class="flex items-center gap-2 text-xs text-slate-600 dark:text-zinc-400 cursor-pointer">
+                        <input type="checkbox" id="staged-recurring-check" class="rounded text-indigo-600">
+                        <span>Recurring monthly subscription</span>
+                    </label>
+
+                    <div class="flex items-center gap-2 self-end">
+                        <button onclick="dismissStaged()" class="px-3.5 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-white">Discard</button>
+                        <button onclick="confirmStagedTransaction()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-sm">
+                            <i class="fa-solid fa-check mr-1"></i> Confirm & Add to Ledger
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DEDICATED SUBSCRIPTIONS & RECURRING CHARGES SECTION -->
+        <section class="bg-white dark:bg-zinc-900 rounded-xl p-4 sm:p-5 border border-slate-200/80 dark:border-zinc-800/80 space-y-4" aria-labelledby="subscriptions-heading">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 dark:border-zinc-800 gap-2">
+                <div>
+                    <h2 id="subscriptions-heading" class="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span>Active Subscriptions & Recurring Commitments</span>
+                        <span id="subs-count-badge" class="text-xs px-2 py-0.2 rounded font-medium bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400">0</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-zinc-400">
+                        Tracks fixed monthly commitments (Netflix, Spotify, Gym, Broadband, Cloud storage).
+                    </p>
+                </div>
+                <div class="text-right">
+                    <span class="block text-[10px] uppercase font-semibold text-slate-400">Total Annual Outflow</span>
+                    <span id="subs-annual-total" class="text-base font-bold text-slate-900 dark:text-white font-mono">₹0.00/year</span>
+                </div>
+            </div>
+
+            <!-- Subscriptions Grid -->
+            <div id="subscriptions-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <!-- Dynamically populated or clean empty state -->
+            </div>
+        </section>
+
+        <!-- CHARTS & VISUAL ANALYTICS -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200/80 dark:border-zinc-800/80 flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800 mb-3">
+                    <span class="text-xs font-semibold text-slate-900 dark:text-white">Category Distribution</span>
+                    <span class="text-[11px] text-slate-400">Selected Month</span>
+                </div>
+                <div class="relative h-56 flex items-center justify-center">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                <div id="category-legend" class="mt-3 flex flex-wrap gap-1.5 text-xs"></div>
+            </div>
+
+            <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200/80 dark:border-zinc-800/80 flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800 mb-3">
+                    <span class="text-xs font-semibold text-slate-900 dark:text-white">Daily Outflow vs Safe Target</span>
+                    <span class="text-[11px] text-slate-400">Velocity</span>
+                </div>
+                <div class="relative h-56 flex items-center justify-center">
+                    <canvas id="dailyVelocityChart"></canvas>
+                </div>
+                <span class="text-[10px] text-slate-400 mt-2 text-center block">Dashed line marks the daily spend baseline to stay within limit.</span>
+            </div>
+        </section>
+
+        <!-- TRANSACTIONS LEDGER -->
+        <section class="bg-white dark:bg-zinc-900 rounded-xl p-4 sm:p-5 border border-slate-200/80 dark:border-zinc-800/80 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800 gap-3">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Transactions Ledger</h2>
+                    <span id="tx-count-badge" class="text-xs px-2 py-0.5 rounded font-mono bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400">0</span>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <input type="text" id="tx-search-input" oninput="debounceSearch()" 
+                           placeholder="Search merchant, tag... (/)" 
+                           class="w-40 sm:w-52 px-2.5 py-1 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none">
+                    <select id="tx-filter-type" onchange="renderTransactionsTable()" class="px-2 py-1 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs">
+                        <option value="all">All Types</option>
+                        <option value="expense">Outflow Only</option>
+                        <option value="income">Inflow Only</option>
+                    </select>
+                    <select id="tx-filter-cat" onchange="renderTransactionsTable()" class="px-2 py-1 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs">
+                        <option value="all">All Categories</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50/80 dark:bg-zinc-800/40 text-slate-400 dark:text-zinc-500 uppercase text-[10px] tracking-wider border-b border-slate-100 dark:border-zinc-800">
+                        <tr>
+                            <th scope="col" class="py-2 px-3">Date</th>
+                            <th scope="col" class="py-2 px-3">Merchant / Payee</th>
+                            <th scope="col" class="py-2 px-3">Category</th>
+                            <th scope="col" class="py-2 px-3">Method</th>
+                            <th scope="col" class="py-2 px-3 text-right">Amount</th>
+                            <th scope="col" class="py-2 px-3 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tx-table-body" class="divide-y divide-slate-100 dark:divide-zinc-800/80"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- DEDICATED PROFILE & ACCOUNT MODAL -->
+    <div id="profile-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" role="dialog" aria-modal="true">
+        <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-slate-200 dark:border-zinc-800 max-w-md w-full p-5 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-zinc-800">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center font-bold text-xs">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Account & Data Storage</h3>
+                        <span class="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Local Storage Active
+                        </span>
+                    </div>
+                </div>
+                <button onclick="closeProfileModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Profile Info Form -->
+            <form onsubmit="handleSaveProfile(event)" class="space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-600 dark:text-zinc-400 mb-1">Your Name</label>
+                        <input type="text" id="profile-name-input" class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-600 dark:text-zinc-400 mb-1">Currency</label>
+                        <select id="profile-currency-select" class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-medium">
+                            <option value="₹">Indian Rupee (₹ INR)</option>
+                            <option value="$">US Dollar ($ USD)</option>
+                            <option value="€">Euro (€ EUR)</option>
+                            <option value="£">British Pound (£ GBP)</option>
+                            <option value="¥">Japanese Yen (¥ JPY)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-600 dark:text-zinc-400 mb-1">Monthly Spending Budget (<span class="user-currency-symbol">₹</span>)</label>
+                    <input type="number" step="500" min="100" id="profile-budget-input" class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-medium">
+                </div>
+
+                <div class="pt-1">
+                    <button type="submit" class="w-full py-1.5 bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 text-white rounded-lg text-xs font-medium transition">
+                        Update Profile
+                    </button>
+                </div>
+            </form>
+
+            <!-- Lifetime Statistics Snapshot -->
+            <div class="p-3 bg-slate-50 dark:bg-zinc-800/60 rounded-lg border border-slate-100 dark:border-zinc-800 space-y-1.5 text-xs">
+                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">All-Time Statistics</span>
+                <div class="grid grid-cols-2 gap-2 text-[11px]">
+                    <div>Transactions Logged: <strong id="profile-lifetime-count" class="font-mono">0</strong></div>
+                    <div>Active Subscriptions: <strong id="profile-lifetime-subs" class="font-mono">0</strong></div>
+                    <div>Lifetime Outflows: <strong id="profile-lifetime-outflow" class="font-mono">₹0.00</strong></div>
+                    <div>Lifetime Inflows: <strong id="profile-lifetime-inflow" class="font-mono">₹0.00</strong></div>
+                </div>
+            </div>
+
+            <!-- Data Persistence Notice & Backup/Restore -->
+            <div class="space-y-2 pt-1 border-t border-slate-100 dark:border-zinc-800 text-xs">
+                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Data Backup & Recovery</span>
+                <p class="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
+                    All your records are stored persistently in this browser's Local Storage. Closing your tab or restarting your PC will <strong>never</strong> erase your data.
+                </p>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <button onclick="handleExportJSONBackup()" class="flex-1 py-1.5 px-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 rounded text-xs font-medium transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-download text-xs text-slate-400"></i> Export Backup (JSON)
+                    </button>
+                    
+                    <label class="flex-1 py-1.5 px-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 rounded text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-upload text-xs text-slate-400"></i> Restore Backup
+                        <input type="file" accept=".json" onchange="handleImportJSONBackup(event)" class="hidden">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Clear All Data -->
+            <div class="pt-2 border-t border-slate-100 dark:border-zinc-800 flex justify-between items-center text-xs">
+                <span class="text-[11px] text-slate-400">Need a fresh start?</span>
+                <button onclick="handleClearAllData()" class="text-rose-600 hover:underline font-medium text-xs">
+                    Clear All Records
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" role="dialog" aria-modal="true">
+        <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-slate-200 dark:border-zinc-800 max-w-sm w-full p-5 space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
+                <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Budget & Currency Settings</h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleSaveSettings(event)" class="space-y-3.5">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">Monthly Spending Budget Target</label>
+                    <input type="number" step="500" min="100" id="set-budget" value="50000" required class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold">
+                    <span class="text-[10px] text-slate-400 mt-0.5 block">Powers daily safe burn pacing and overspend alerts.</span>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">Alert Threshold: <span id="threshold-val" class="font-bold">80%</span></label>
+                    <input type="range" min="50" max="95" step="5" id="set-threshold" value="80" oninput="document.getElementById('threshold-val').textContent = this.value + '%'" class="w-full accent-slate-900 dark:accent-indigo-500 cursor-pointer">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">Currency</label>
+                    <select id="set-currency" class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs">
+                        <option value="₹" selected>Indian Rupee (₹ INR)</option>
+                        <option value="$">US Dollar ($ USD)</option>
+                        <option value="€">Euro (€ EUR)</option>
+                        <option value="£">British Pound (£ GBP)</option>
+                        <option value="¥">Japanese Yen (¥ JPY)</option>
+                    </select>
+                </div>
+                <div class="pt-2 flex items-center justify-end gap-2">
+                    <button type="button" onclick="closeSettingsModal()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white">Cancel</button>
+                    <button type="submit" class="px-4 py-1.5 bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 text-white rounded text-xs font-medium">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SHORTCUTS MODAL -->
+    <div id="keyboard-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" role="dialog" aria-modal="true">
+        <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-slate-200 dark:border-zinc-800 max-w-sm w-full p-5 space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
+                <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Keyboard Navigation</h3>
+                <button onclick="toggleKeyboardModal(false)" class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-2 text-xs">
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-zinc-800"><span>Quick Add</span><kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-zinc-800 rounded font-mono border text-[11px]">N</kbd></div>
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-zinc-800"><span>Voice Record</span><kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-zinc-800 rounded font-mono border text-[11px]">V</kbd></div>
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-zinc-800"><span>Paste SMS</span><kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-zinc-800 rounded font-mono border text-[11px]">S</kbd></div>
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-zinc-800"><span>Search Ledger</span><kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-zinc-800 rounded font-mono border text-[11px]">/</kbd></div>
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-zinc-800"><span>Toggle Contrast</span><kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-zinc-800 rounded font-mono border text-[11px]">Alt+C</kbd></div>
+                <div class="flex justify-between py-1"><span>Show Shortcuts</span><kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-zinc-800 rounded font-mono border text-[11px]">?</kbd></div>
+            </div>
+            <button onclick="toggleKeyboardModal(false)" class="w-full py-1.5 bg-slate-900 dark:bg-indigo-600 text-white rounded text-xs font-medium mt-2">Dismiss</button>
+        </div>
+    </div>
+
+    <!-- Minimalist Footer -->
+    <footer class="mt-auto border-t border-slate-200/60 dark:border-zinc-800/60 py-4 text-center text-xs text-slate-400 dark:text-zinc-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div><span class="font-medium text-slate-700 dark:text-zinc-300">SpendWise</span> — Built for financial clarity and effortless logging.</div>
+            <div class="flex items-center gap-3">
+                <span>Default: ₹ INR</span>
+                <span>•</span>
+                <span>GitHub Pages Ready</span>
+                <span>•</span>
+                <span>Persistent Local Storage</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- App Scripts -->
+    <script src="./js/nlp-parser.js"></script>
+    <script src="./js/store.js"></script>
+    <script src="./js/app-static.js"></script>
+</body>
+</html>
