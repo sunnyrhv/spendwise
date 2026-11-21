@@ -1,0 +1,110 @@
+/* ========================================================
+   styles.css - SpendWise Minimalist Fintech Design System
+   Inspired by Linear, Copilot Money & Stripe.
+   Refined typography, high information density, zero clutter.
+   ======================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+    --bg-base: #f8fafc;
+    --card-base: #ffffff;
+    --border-subtle: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-muted: #64748b;
+}
+
+.dark {
+    --bg-base: #09090b;
+    --card-base: #121215;
+    --border-subtle: #27272a;
+    --text-primary: #f4f4f5;
+    --text-muted: #a1a1aa;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: -0.011em;
+}
+
+/* Subtle focus indicators */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid #6366f1 !important;
+    outline-offset: 1px !important;
+}
+
+/* HIGH CONTRAST (WCAG A11y) */
+html.high-contrast {
+    filter: contrast(125%);
+}
+
+html.high-contrast body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+html.high-contrast.dark body {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+}
+
+html.high-contrast .border,
+html.high-contrast [class*="border-"] {
+    border-color: #000000 !important;
+    border-width: 2px !important;
+}
+
+html.high-contrast.dark .border,
+html.high-contrast.dark [class*="border-"] {
+    border-color: #ffffff !important;
+    border-width: 2px !important;
+}
+
+/* FONT SIZE SCALING */
+html.font-large {
+    font-size: 112.5%;
+}
+
+html.font-xlarge {
+    font-size: 125%;
+}
+
+/* REFINED SCROLLBAR */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+    background: #3f3f46;
+}
+
+/* PRINT STYLESHEET */
+@media print {
+    header, footer, #quick-logger-panel, #staged-card, button {
+        display: none !important;
+    }
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 11pt;
+    }
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+    th, td {
+        border: 1px solid #e2e8f0 !important;
+        padding: 6px 10px !important;
+    }
+}
